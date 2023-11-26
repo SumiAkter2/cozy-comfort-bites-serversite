@@ -1,5 +1,6 @@
 const express = require("express");
-const req = require("express/lib/request");
+// const req = require("express/lib/request");
+const bodyParser = require("body-parser");
 const app = express();
 require("dotenv").config();
 const cors = require("cors");
@@ -8,6 +9,7 @@ const port = process.env.PORT || 5000;
 // middleware:
 app.use(cors());
 app.use(express());
+app.use(bodyParser.json());
 
 // mongodb:
 
@@ -24,10 +26,6 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
-    await client.connect();
-    await client.db("admin").command({ ping: 1 });
-    console.log("You successfully connected to MongoDB!");
-
     const menuCollection = client.db("cozyComfortBitesdb").collection("menu");
     const reviewCollection = client
       .db("cozyComfortBitesdb")
@@ -43,19 +41,28 @@ async function run() {
       res.send(result);
     });
 
-    app.post("/carts", async (req, res) => {
-      const cart = req.body;
-      const result = await cartCollection.insertOne(cart);
+    //  cart collection
+
+    app.get("/cart", async (req, res) => {
+      const email = req.body.email;
+      if (!email) {
+        res.send([]);
+      }
+      const query = { email: email };
+      const result = await cartCollection.find(query).toArray();
+      res.send(result);
+    });
+    app.post("/cart", async (req, res) => {
+      const cartItem = req.body;
+      console.log(cartItem);
+      const result = await cartCollection.insertOne(cartItem);
       res.send(result);
     });
 
-    app.get("carts", async (req, res) => {
-      const result = await cartCollection.find().toArray();
-      res.send(result);
-    });
+    await client.connect();
+    await client.db("admin").command({ ping: 1 });
+    console.log("You successfully connected to MongoDB!");
   } finally {
-    // Ensures that the client will close when you finish/error
-    // await client.close();
   }
 }
 run().catch(console.dir);
