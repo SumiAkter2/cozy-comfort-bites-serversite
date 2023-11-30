@@ -13,7 +13,7 @@ app.use(bodyParser.json());
 
 // mongodb:
 
-const { MongoClient, ServerApiVersion } = require("mongodb");
+const { MongoClient, ServerApiVersion, ObjectId } = require("mongodb");
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.8rhsfz4.mongodb.net/?retryWrites=true&w=majority`;
 
 const client = new MongoClient(uri, {
@@ -56,6 +56,13 @@ async function run() {
       const cartItem = req.body;
       console.log(cartItem);
       const result = await cartCollection.insertOne(cartItem);
+      res.send(result);
+    });
+
+    app.delete("/cart/:id", async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: ObjectId(id) };
+      const result = await cartCollection.deleteOne(query);
       res.send(result);
     });
 
