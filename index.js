@@ -34,6 +34,10 @@ async function run() {
     const cartCollection = client.db("cozyComfortBitesdb").collection("carts");
 
     // user related apis:
+    app.get("/user", async (req, res) => {
+      const result = await userCollection.find().toArray();
+      res.send(result);
+    });
     app.post("/user", async (req, res) => {
       const user = req.body;
       console.log(user);
