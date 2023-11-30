@@ -26,22 +26,32 @@ const client = new MongoClient(uri, {
 
 async function run() {
   try {
+    const userCollection = client.db("cozyComfortBitesdb").collection("users");
     const menuCollection = client.db("cozyComfortBitesdb").collection("menu");
     const reviewCollection = client
       .db("cozyComfortBitesdb")
       .collection("reviews");
     const cartCollection = client.db("cozyComfortBitesdb").collection("carts");
 
+    // user related apis:
+    app.post("/user", async (req, res) => {
+      const user = req.body;
+      const result = await userCollection.insertOne(user);
+      res.send(result);
+    });
+
+    // menu collection apis
     app.get("/menu", async (req, res) => {
       const result = await menuCollection.find().toArray();
       res.send(result);
     });
+    // review collection apis
     app.get("/review", async (req, res) => {
       const result = await reviewCollection.find().toArray();
       res.send(result);
     });
 
-    //  cart collection
+    //  cart collection apis
 
     app.get("/cart", async (req, res) => {
       const email = req.query.email;
@@ -54,14 +64,13 @@ async function run() {
     });
     app.post("/cart", async (req, res) => {
       const cartItem = req.body;
-      console.log(cartItem);
       const result = await cartCollection.insertOne(cartItem);
       res.send(result);
     });
 
     app.delete("/cart/:id", async (req, res) => {
       const id = req.params.id;
-      const query = { _id: ObjectId(id) };
+      const query = { _id: new ObjectId(id) };
       const result = await cartCollection.deleteOne(query);
       res.send(result);
     });
