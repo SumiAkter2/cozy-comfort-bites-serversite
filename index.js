@@ -4,12 +4,35 @@ const bodyParser = require("body-parser");
 const app = express();
 require("dotenv").config();
 const cors = require("cors");
+const jwt = require("jsonwebtoken");
 const port = process.env.PORT || 5000;
 
 // middleware:
 app.use(cors());
 app.use(express());
 app.use(bodyParser.json());
+
+// Verify jwt:
+const verifyJwt = (req, res, next) => {
+  const authorization = req.headers.authorization;
+  if (!authorization) {
+    return res
+      .status(401)
+      .send({ error: true, message: "unauthorized access!" });
+  }
+  // bearer token:
+
+  const token = authorization.split(" ")[1];
+  jwt.verify(token, process.env.ACCESS_TOKEN_SECRET, (err, decoded) => {
+    if (err) {
+      return res
+        .status(401)
+        .send({ error: true, message: "unauthorized access!" });
+    }
+    req.decoded = decoded;
+    next();
+  });
+};
 
 // mongodb:
 
@@ -38,7 +61,13 @@ async function run() {
       const result = await userCollection.find().toArray();
       res.send(result);
     });
-
+    app.post("/jwt", (req, res) => {
+      const user = req.body;
+      const token = jwt.sign(user, process.env.ACCESS_TOKEN_SECRET, {
+        expiresIn: "1h",
+      });
+      res.send({ token });
+    });
     app.post("/user", async (req, res) => {
       const user = req.body;
       console.log(user);
@@ -83,10 +112,16 @@ async function run() {
 
     //  cart collection apis
 
-    app.get("/cart", async (req, res) => {
+    app.get("/cart", verifyJwt, async (req, res) => {
       const email = req.query.email;
       if (!email) {
         return res.send([]);
+      }
+      const decodedEmail = req.decoded.email;
+      if (email !== decodedEmail) {
+        return res
+          .status(401)
+          .send({ error: true, message: "Forbidden access!" });
       }
       const query = { email: email };
       const result = await cartCollection.find(query).toArray();
