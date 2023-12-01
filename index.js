@@ -38,6 +38,7 @@ async function run() {
       const result = await userCollection.find().toArray();
       res.send(result);
     });
+
     app.post("/user", async (req, res) => {
       const user = req.body;
       console.log(user);
@@ -51,6 +52,17 @@ async function run() {
       res.send(result);
     });
 
+    app.patch("/user/admin/:id", async (req, res) => {
+      const id = req.params.id;
+      const filter = { _id: new ObjectId(id) };
+      const updateDoc = {
+        $set: {
+          role: "admin",
+        },
+      };
+      const result = await userCollection.updateOne(filter, updateDoc);
+      res.send(result);
+    });
     // menu collection apis
     app.get("/menu", async (req, res) => {
       const result = await menuCollection.find().toArray();
